@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import nodeWebcam from 'node-webcam';
 import Webcam from './components/webcam';
 import OBS from './components/obs';
 
