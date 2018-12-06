@@ -4,7 +4,8 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "start": "cross-env NODE_ENV=development nodemon -L ./src --inspect --exec babel-node --presets env,stage-2",
+    "dev": "cross-env NODE_ENV=development nodemon -L ./src --inspect --exec babel-node --presets env,stage-2",
+    "start": "nodemon -L ./src --inspect --exec babel-node --presets env,stage-2",
     "listcams": "babel-node ./scripts/listcams.js --presets env,stage-2"
   },
   "dependencies": {

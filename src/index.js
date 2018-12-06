@@ -20,7 +20,7 @@ const obs = new OBS();
 // run through each cam, and create them
 nodeCam.list((list) => {
     list.forEach((camName) => {
-        if (!camName.includes('C920')) {
+        if (process.env.NODE_ENV === 'development' && !camName.includes('C920')) {
             return;
         }
 
