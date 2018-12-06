@@ -1,29 +1,31 @@
 import dotenv from 'dotenv';
-import nodeWebcam from 'node-webcam';
 import Webcam from './components/webcam';
 import OBS from './components/obs';
-import camScenes from '../cams.json';
+import cams from '../cams.json';
+import cluster from 'cluster';
 
 const configured = dotenv.config();
 if (configured.error) {
     throw configured.error;
 }
 
-const cams = [];
-
-//Creates webcam instance
-const nodeCam = nodeWebcam.create();
-
 // connect to OBS
 const obs = new OBS();
 
-// run through each cam, and create them
-nodeCam.list((list) => {
-    list.forEach((camName) => {
-        if (!camName.includes('C920')) {
-            return;
+if (cluster.isMaster) {
+    // run through each cam, and create them
+    cams.forEach((cam, index) => {
+        if (index === 0) {
+            new Webcam(cam.name, cam.scene, obs);
         }
 
-        cams.push(new Webcam(camName, camScenes[camName], obs));
+        if (index !== 0) {
+            cluster.fork({
+                camIndex: index,
+            });
+        }
     });
-});
+} else {
+    const {name, scene} = cams[process.env.camIndex];
+    new Webcam(name, scene, obs);
+}

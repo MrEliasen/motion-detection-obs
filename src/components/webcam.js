@@ -5,6 +5,7 @@ import Path from 'path';
 
 class Webcam {
     constructor(camName, sceneName, obs) {
+        this.camName = camName;
         this.scene = sceneName;
         this.obs = obs;
         this.cam = nodeWebcam.create({
@@ -28,46 +29,71 @@ class Webcam {
         this.fileOutput = Path.join(__dirname, '../../images/', camName.replace(/[^a-z0-9\_\-]/gi, '_').toLowerCase());
         this.lastPicture = null;
 
+        // set a timer to detect movement every 750ms
+        this.interval = setInterval(this._detectMovement, 1000);
+
         // get the first image
         this._detectMovement();
-        // set a timer to detect movement every 750ms
-        this.interval = setInterval(this._detectMovement, 750);
     }
 
-    async _convertImage(newPictureBuffer) {
-        // convert the buffer to a png
-        Jimp.read(newPictureBuffer, (err, image) => {
-            // convert image and resize
-            image.grayscale().resize(640, 360);
-            // get the image as a buffer
-            image.getBuffer(Jimp.MIME_PNG, (err, imageBuffer) => {
-                Promise.resolve(imageBuffer);
+    _convertImage(newPictureBuffer) {
+        return new Promise((resolve) => {
+            // convert the buffer to a png
+            Jimp.read(newPictureBuffer, (err, image) => {
+
+                if (!image.bitmap.data) {
+                    console.log('no image');
+                    resolve(null);
+                    return;
+                }
+
+                // convert image and resize
+                image.grayscale();
+
+                // get the image as a buffer
+                image.getBuffer(Jimp.MIME_PNG, (err, imageBuffer) => {
+                    if (err) {
+                        console.log(err);
+                    }
+
+                    resolve(imageBuffer);
+                });
             });
         });
     }
 
-    async _takePicture() {
-        try {
-            this.cam.capture(this.fileOutput, async (err, newPicture) => {
-                const imageBuffer = await this._convertImage(newPicture);
-                Promise.resolve(imageBuffer)
-            });
-        } catch(error) {
-            console.log(error);
+    areBuffersEqual(bufA, bufB) {
+        var len = bufA.length;
+        if (len !== bufB.length) {
+            return false;
         }
+        for (var i = 0; i < len; i++) {
+            if (bufA.readUInt8(i) !== bufB.readUInt8(i)) {
+                return false;
+            }
+        }
+        return true;
     }
 
-    async _changeScene(hadMovement) {
-        if (!hadMovement) {
-            return;
-        }
+    _takePicture() {
+        return new Promise((resolve) => {
+            this.cam.capture(this.fileOutput, async (err, newPicture) => {
+                if (!newPicture) {
+                    resolve(null);
+                }
 
-        // do OBS magic here
-        this.obs.switchScene(this.sceneName);
+                const imageBuffer = await this._convertImage(newPicture);
+                resolve(imageBuffer)
+            });
+        });
     }
 
     _detectMovement = async () => {
-        let imageBuffer = await this._takePicture();
+        const imageBuffer = await this._takePicture();
+
+        if (!imageBuffer) {
+            return;
+        }
 
         if (!this.lastPicture) {
             this.lastPicture = imageBuffer;
@@ -78,7 +104,7 @@ class Webcam {
             this.lastPicture,
             imageBuffer,
             {
-                ignoreAntialiasing: true,
+                ignoreAntialiasing: false,
                 tolerance: process.env.MD_TOLERANCE,
                 strict: false
             },
@@ -89,9 +115,17 @@ class Webcam {
                 }
 
                 this.lastPicture = imageBuffer;
-                this._changeScene(equal);
+                this._changeScene(!equal);
             }
         );
+    }
+
+    async _changeScene(hadMovement) {
+        if (!hadMovement) {
+            return;
+        }
+
+        this.obs.switchScene(this.scene);
     }
 }
 
