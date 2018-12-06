@@ -43,5 +43,6 @@ jspm_packages
 
 # live files
 build
+.env
 images/*.png
 images/*.jpg

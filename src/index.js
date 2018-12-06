@@ -1,5 +1,11 @@
+import dotenv from 'dotenv';
 import Webcam from './components/webcam';
 import OBS from './components/obs';
+
+const configured = dotenv.config();
+if (configured.error) {
+    throw configured.error;
+}
 
 const cams = [];
 const camScenes = {
