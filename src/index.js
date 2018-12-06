@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 import nodeWebcam from 'node-webcam';
 import Webcam from './components/webcam';
 import OBS from './components/obs';
+import camScenes from '../cams.json';
 
 const configured = dotenv.config();
 if (configured.error) {
@@ -9,9 +10,6 @@ if (configured.error) {
 }
 
 const cams = [];
-const camScenes = {
-    'HD Pro Webcam C920': 'office',
-};
 
 //Creates webcam instance
 const nodeCam = nodeWebcam.create();

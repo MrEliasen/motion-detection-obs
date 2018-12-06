@@ -43,6 +43,7 @@ jspm_packages
 
 # live files
 build
+cams.json
 .env
 images/*.png
 images/*.jpg
