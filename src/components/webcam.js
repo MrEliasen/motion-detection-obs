@@ -1,6 +1,7 @@
 import looksSame from 'looks-same';
 import nodeWebcam from 'node-webcam';
 import Jimp from 'jimp';
+import Path from 'path';
 
 class Webcam {
     constructor(camName, sceneName, obs) {
@@ -17,32 +18,37 @@ class Webcam {
             //Which camera to use
             //Use Webcam.list() for results
             //false for default device
-            device: false,
+            device: camName,
             // [location, buffer, base64]
             // Webcam.CallbackReturnTypes
             callbackReturn: "buffer",
             //Logging
             verbose: false
         });
-        this.fileName = camName.replace(/[^a-z0-9\_\-]/gi, '_').toLowerCase();
+        this.fileOutput = Path.join(__dirname, '../../images/', camName.replace(/[^a-z0-9\_\-]/gi, '_').toLowerCase());
         this.lastPicture = null;
+
+        // get the first image
+        this._detectMovement();
+        // set a timer to detect movement every 750ms
         this.interval = setInterval(this._detectMovement, 750);
     }
 
     async _convertImage(newPictureBuffer) {
         // convert the buffer to a png
-        let image = await Jimp.read(newPictureBuffer);
-        // convert image and resize
-        image.grayscale().resize(640, 360);
-        // get the image as a buffer
-        imageBuffer = await image.getBuffer(Jimp.MIME_PNG);
-
-        return imageBuffer;
+        Jimp.read(newPictureBuffer, (err, image) => {
+            // convert image and resize
+            image.grayscale().resize(640, 360);
+            // get the image as a buffer
+            image.getBuffer(Jimp.MIME_PNG, (err, imageBuffer) => {
+                Promise.resolve(imageBuffer);
+            });
+        });
     }
 
     async _takePicture() {
         try {
-            this.cam.capture(fileName, async (err, newPicture) => {
+            this.cam.capture(this.fileOutput, async (err, newPicture) => {
                 const imageBuffer = await this._convertImage(newPicture);
                 Promise.resolve(imageBuffer)
             });
@@ -73,7 +79,7 @@ class Webcam {
             imageBuffer,
             {
                 ignoreAntialiasing: true,
-                tolerance: 20,
+                tolerance: process.env.MD_TOLERANCE,
                 strict: false
             },
             (error, equal) => {
