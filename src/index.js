@@ -22,6 +22,10 @@ const obs = new OBS();
 // run through each cam, and create them
 nodeCam.list((list) => {
     list.forEach((camName) => {
+        if (!camName.includes('C920')) {
+            return;
+        }
+
         cams.push(new Webcam(camName, camScenes[camName], obs));
     });
 });
