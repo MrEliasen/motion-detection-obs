@@ -46,8 +46,8 @@ class OBS extends EventEmitter {
         this._clearReconnectTimer();
 
         this.obs.connect({
-            address: 'localhost:4444',
-            password: '$up3rSecretP@ssw0rd'
+            address: process.env.OBS_HOST,
+            password: process.env.OBS_PASSWORD,
         })
         .then(() => {
             console.log(`Connected to OBS.`);
