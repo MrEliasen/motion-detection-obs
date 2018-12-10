@@ -4,10 +4,9 @@ import Jimp from 'jimp';
 import Path from 'path';
 
 class Webcam {
-    constructor(camName, sceneName, obs) {
+    constructor(camName, sceneName) {
         this.camName = camName;
         this.scene = sceneName;
-        this.obs = obs;
         this.cam = nodeWebcam.create({
             //Delay to take shot
             delay: 0,
@@ -125,7 +124,11 @@ class Webcam {
             return;
         }
 
-        this.obs.switchScene(this.scene);
+        // notify the master of the scene change
+        process.send({
+            type: 'switchScene',
+            scene: this.scene,
+        });
     }
 }
 

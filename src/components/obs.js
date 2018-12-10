@@ -1,25 +1,19 @@
+import EventEmitter from 'events';
 import OBSWebSocket from 'obs-websocket-js';
 
-
-class OBS {
+class OBS extends EventEmitter {
     constructor() {
+        super();
+
         this.obs = new OBSWebSocket();
         this.connected = false;
-        this.reConnecting = false;
-        this.currentScene = '';
-        this.lastSwitch = null;
-
-        this.obs.on('SwitchScenes', (data) => {
-            this.currentScene = data.sceneName.trim();
-            this.lastSwitch = this._now();
-        });
+        this.reconnection = null;
 
         this.obs.on('ConnectionOpened', () => {
             this.connected = true;
 
             if (this.reconnection !== null) {
-                clearTimeout(this.reconnection);
-                this.reconnection = null;
+                this._clearReconnectTimer();
             }
         });
 
@@ -27,12 +21,6 @@ class OBS {
             this.connected = false;
             this._reconnect();
         });
-
-        this._connect();
-    }
-
-    _now () {
-        return Math.round((new Date()).getTime() / 1000);
     }
 
     _reconnect = () => {
@@ -44,11 +32,18 @@ class OBS {
         console.log(`Unable to connect to OBS, retrying in 5 seconds..`);
     }
 
-    _connect = () => {
+    _clearReconnectTimer() {
         if (this.reconnection !== null) {
-            clearTimeout(this.reconnection);
+            try {
+                clearTimeout(this.reconnection);
+            } catch (err) {} //supress
+
             this.reconnection = null;
         }
+    }
+
+    _connect = () => {
+        this._clearReconnectTimer();
 
         this.obs.connect({
             address: 'localhost:4444',
@@ -59,7 +54,7 @@ class OBS {
             this.connected = true;
         })
         .then((data) => {
-            this.currentScene = data.currentScene;
+            myEmitter.emit('SwitchScenes', data.currentScene);
         })
         .catch((err) => {
             if (err.errno === 'ECONNREFUSED') {
@@ -70,16 +65,11 @@ class OBS {
 
     switchScene(sceneName) {
         try {
-            if (!this.connected || this.currentScene === sceneName) {
-                return;
-            }
-
-            if (this._now() - this.lastSwitch < 1) {
+            if (!this.connected) {
                 return;
             }
 
             console.log('Switching Scene:', sceneName);
-            this.currentScene = sceneName;
             this.obs.setCurrentScene({'scene-name': sceneName});
         } catch (err) {}
     }
