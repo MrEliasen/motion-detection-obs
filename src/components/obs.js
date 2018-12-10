@@ -21,6 +21,11 @@ class OBS extends EventEmitter {
             this.connected = false;
             this._reconnect();
         });
+
+        obs.onSwitchScenes((data) => {
+            myEmitter.emit('SwitchScenes', data.sceneName);
+        });
+
     }
 
     _reconnect = () => {
@@ -66,12 +71,14 @@ class OBS extends EventEmitter {
     switchScene(sceneName) {
         try {
             if (!this.connected) {
-                return;
+                return null;
             }
 
-            console.log('Switching Scene:', sceneName);
             this.obs.setCurrentScene({'scene-name': sceneName});
-        } catch (err) {}
+            return sceneName;
+        } catch (err) {
+            return null;
+        }
     }
 }
 

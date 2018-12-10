@@ -44,7 +44,7 @@ class Server {
             return;
         }
 
-        this.currentScene = sceneName;
+        this.obs.switchScene(sceneName);
     }
 }
 
