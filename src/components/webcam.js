@@ -41,7 +41,6 @@ class Webcam {
             Jimp.read(newPictureBuffer, (err, image) => {
 
                 if (!image.bitmap.data) {
-                    console.log('no image');
                     resolve(null);
                     return;
                 }
