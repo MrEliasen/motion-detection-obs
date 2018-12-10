@@ -1,8 +1,8 @@
 import dotenv from 'dotenv';
-import Webcam from './components/webcam';
-import Server from './components/server';
-import cams from '../cams.json';
 import cluster from 'cluster';
+import Server from './components/server';
+import Webcam from './components/webcam';
+import cams from '../cams.json';
 
 const configured = dotenv.config();
 if (configured.error) {
@@ -11,15 +11,10 @@ if (configured.error) {
 
 if (cluster.isMaster) {
     // connect to OBS
-    const server = new Server();
+    new Server(cluster);
+}
 
-    // run through each cam, and create them
-    cams.forEach((cam, index) => {
-        cluster.fork({
-            camIndex: index,
-        });
-    });
-} else {
+if (cluster.isWorker) {
     const {name, scene} = cams[process.env.camIndex];
     new Webcam(name, scene);
 }

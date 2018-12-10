@@ -118,7 +118,7 @@ class Webcam {
         );
     }
 
-    async _changeScene(hadMovement) {
+    _changeScene(hadMovement) {
         if (!hadMovement) {
             return;
         }

@@ -15,11 +15,10 @@ class OBS extends EventEmitter {
 
         this.obs.on('ConnectionClosed', () => {
             this.connected = false;
-            this._reconnect();
         });
 
-        obs.onSwitchScenes((data) => {
-            myEmitter.emit('SwitchScenes', data.sceneName);
+        this.obs.onSwitchScenes((data) => {
+            this.emit('SwitchScenes', data.sceneName);
         });
 
         this._heartBeat();
@@ -44,7 +43,7 @@ class OBS extends EventEmitter {
             this.initialised = true;
         })
         .then((data) => {
-            myEmitter.emit('SwitchScenes', data.currentScene);
+            this.emit('SwitchScenes', data.currentScene);
         })
         .catch((err) => {
             this.initialised = true;

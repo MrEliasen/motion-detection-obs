@@ -1,17 +1,24 @@
 import OBS from './obs';
+import cams from '../../cams.json';
 
 class Server {
-    constructor() {
-        this.obs = new OBS();
+    constructor(cluster, workers) {
         this.currentScene = '';
+        this.cluster = cluster;
         this.lastSwitch = null;
 
+        this.obs = new OBS();
         this.obs.on('SwitchScenes', this._obsSceneSwitched);
-        // messages from the cluster children
-        process.on('message', this._message);
-
-        // connect OBS
         this.obs._connect();
+
+        this._setupCams();
+    }
+
+    _setupCams() {
+        cams.forEach((cam, index) => {
+            const worker = this.cluster.fork({camIndex: index});
+            worker.on('message', this._message);
+        });
     }
 
     _now () {
@@ -30,8 +37,8 @@ class Server {
         }
     }
 
-    _obsSceneSwitched = (data) => {
-        this.currentScene = data.sceneName.trim();
+    _obsSceneSwitched = (sceneName) => {
+        this.currentScene = sceneName;
         this.lastSwitch = this._now();
     }
 
@@ -48,4 +55,4 @@ class Server {
     }
 }
 
-export default OBS;
+export default Server;
