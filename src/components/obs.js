@@ -6,15 +6,11 @@ class OBS extends EventEmitter {
         super();
 
         this.obs = new OBSWebSocket();
+        this.initialised = false;
         this.connected = false;
-        this.reconnection = null;
 
         this.obs.on('ConnectionOpened', () => {
             this.connected = true;
-
-            if (this.reconnection !== null) {
-                this._clearReconnectTimer();
-            }
         });
 
         this.obs.on('ConnectionClosed', () => {
@@ -26,30 +22,18 @@ class OBS extends EventEmitter {
             myEmitter.emit('SwitchScenes', data.sceneName);
         });
 
+        this._heartBeat();
     }
 
-    _reconnect = () => {
-        if (this.reconnection !== null) {
+    _heartBeat = () => {
+        if (this.connected || !this.initialised) {
             return;
         }
 
-        this.reconnection = setTimeout(this._connect, 5000);
-        console.log(`Unable to connect to OBS, retrying in 5 seconds..`);
-    }
-
-    _clearReconnectTimer() {
-        if (this.reconnection !== null) {
-            try {
-                clearTimeout(this.reconnection);
-            } catch (err) {} //supress
-
-            this.reconnection = null;
-        }
+        setInterval(this._connect, 5000);
     }
 
     _connect = () => {
-        this._clearReconnectTimer();
-
         this.obs.connect({
             address: process.env.OBS_HOST,
             password: process.env.OBS_PASSWORD,
@@ -57,14 +41,13 @@ class OBS extends EventEmitter {
         .then(() => {
             console.log(`Connected to OBS.`);
             this.connected = true;
+            this.initialised = true;
         })
         .then((data) => {
             myEmitter.emit('SwitchScenes', data.currentScene);
         })
         .catch((err) => {
-            if (err.errno === 'ECONNREFUSED') {
-                this-_reconnect();
-            }
+            this.initialised = true;
         });
     }
 
