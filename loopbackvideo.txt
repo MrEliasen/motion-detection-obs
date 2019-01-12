@@ -1,0 +1,45 @@
+CRATE LOOPBACKS
+=====================================
+sudo modprobe v4l2loopback video_nr=4,5,6,7,8,9
+
+REMOVE LOOPBACKS
+=====================================
+sudo modprobe -r v4l2loopback
+
+SEE LIST OF DEVICES
+=====================================
+v4l2-ctl --list-devices
+
+EXAMPLE OUTPUT
+=====================================
+Dummy video device (0x0000) (platform:v4l2loopback-000):
+	/dev/video5
+
+Dummy video device (0x0001) (platform:v4l2loopback-001):
+	/dev/video6
+
+Dummy video device (0x0002) (platform:v4l2loopback-002):
+	/dev/video7
+
+HD Pro Webcam C920 (usb-0000:05:00.0-2.3):
+	/dev/video0
+
+HD Pro Webcam C920 (usb-0000:05:00.0-3.4):
+	/dev/video1
+
+
+CREATING A PIPES
+=====================================
+gst-launch-1.0 v4l2src device=/dev/video0 ! tee name=t \
+t. ! queue ! decodebin ! videoconvert ! videoscale ! videorate ! video/x-raw,format=YUY2,framerate=5/1,width=320,height=180 ! v4l2sink device=/dev/video4 \
+t. ! queue ! image/jpeg,framerate=30/1,width=1920,height=1080 ! videorate ! v4l2sink device=/dev/video5
+
+
+gst-launch-1.0 v4l2src device=/dev/video1 ! tee name=t \
+t. ! queue ! decodebin ! videoconvert ! videoscale ! videorate ! video/x-raw,format=YUY2,framerate=5/1,width=320,height=180 ! v4l2sink device=/dev/video6 \
+t. ! queue ! image/jpeg,framerate=30/1,width=1920,height=1080 ! videorate ! v4l2sink device=/dev/video7
+
+
+gst-launch-1.0 v4l2src device=/dev/video2 ! tee name=t \
+t. ! queue ! decodebin ! videoconvert ! videoscale ! videorate ! video/x-raw,format=YUY2,framerate=5/1,width=320,height=180 ! v4l2sink device=/dev/video8 \
+t. ! queue ! image/jpeg,framerate=30/1,width=1920,height=1080 ! videorate ! v4l2sink device=/dev/video9
