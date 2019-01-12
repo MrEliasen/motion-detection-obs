@@ -39,6 +39,11 @@ class Webcam {
         return new Promise((resolve) => {
             // convert the buffer to a png
             Jimp.read(newPictureBuffer, (err, image) => {
+                if (err) {
+                    console.log(err);
+                    resolve(null);
+                    return;
+                }
 
                 if (!image.bitmap.data) {
                     resolve(null);
@@ -77,7 +82,9 @@ class Webcam {
         return new Promise((resolve) => {
             this.cam.capture(this.fileOutput, async (err, newPicture) => {
                 if (!newPicture) {
+                    console.log(err);
                     resolve(null);
+                    return;
                 }
 
                 const imageBuffer = await this._convertImage(newPicture);
